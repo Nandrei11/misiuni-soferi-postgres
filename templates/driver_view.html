@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vizualizare Șofer - Misiuni Șoferi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
+        .mission { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .no-data { text-align: center; padding: 40px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 Misiuni Șofer</h1>
+            <h2>{{ driver_info.prenume }} {{ driver_info.nume }}</h2>
+            <p>📞 Accesează această pagină pentru a-ți vedea misiunile curente</p>
+        </div>
+
+        <h2>📋 Misiuni Active</h2>
+        
+        {% if missions %}
+            {% for mission in missions %}
+            <div class="mission">
+                <strong>🚗 {{ mission.tip }} - {{ mission.nr_inmatriculare }}</strong><br>
+                📅 {{ mission.data_inceput }} - {{ mission.data_sfarsit }}<br>
+                🎯 {{ mission.destinatie }}<br>
+                📏 {{ mission.distanta }} km<br>
+                📞 {{ mission.persoana_contact }}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-data">
+                <h3>📭 Nicio misiune activă</h3>
+                <p>Nu ai misiuni active în acest moment.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
