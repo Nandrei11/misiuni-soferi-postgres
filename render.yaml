@@ -5,9 +5,8 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
-    pythonVersion: "3.11"   # <- ADAUGĂ ASTA!
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
       - key: DATABASE_URL
-        fromDatabase:
-          name: misiuni-soferi-db
-          property: connectionString
+        value: "postgresql://misiuni_soferi_3ld2_user:Wcn2FhzXbRfSwAMyy80TX5lkpn8clrKS@dpg-d3vab93e5dus73a86hcg-a/misiuni_soferi_3ld2"
