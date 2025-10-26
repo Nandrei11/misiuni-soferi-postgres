@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Misiuni Șoferi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; }
+        .btn-success { background: #28a745; }
+        .mission { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
+        .mission-form { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .mission-form select, .mission-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .menu { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #007bff; }
+        .tab { padding: 10px 20px; cursor: pointer; background: #f8f9fa; margin-right: 5px; border-radius: 5px 5px 0 0; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .mission-actions { position: absolute; top: 10px; right: 10px; }
+        .date-range { display: flex; gap: 10px; }
+        .date-range input { flex: 1; }
+        .completed-mission { background: #f8f9fa; border-left: 4px solid #28a745; }
+        .no-data { text-align: center; padding: 40px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 Panou Admin - Misiuni Șoferi</h1>
+            <div class="menu">
+                <a href="/admin" class="btn">📋 Misiuni</a>
+                <a href="/manage_drivers" class="btn">👥 Gestionează Șoferi</a>
+                <a href="/manage_vehicles" class="btn">🚗 Gestionează Vehicule</a>
+                <a href="/export_active_missions" class="btn" target="_blank">📤 Exportă Misiuni Active</a>
+                <a href="/logout" class="btn" style="background: #dc3545;">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="mission-form">
+            <h2>➕ Creează Misiune Nouă</h2>
+            <form id="createMissionForm">
+                <select name="sofer" required>
+                    <option value="">Alege șoferul</option>
+                    {% for driver in drivers %}
+                    <option value="{{ driver.id }}">{{ driver.prenume }} {{ driver.nume }}</option>
+                    {% endfor %}
+                </select>
+                
+                <select name="vehicul" required>
+                    <option value="">Alege vehiculul</option>
+                    {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.id }}">{{ vehicle.tip }} - {{ vehicle.nr_inmatriculare }}</option>
+                    {% endfor %}
+                </select>
+                
+                <div class="date-range">
+                    <input type="date" name="data_inceput" placeholder="Data început" required value="{{ today }}">
+                    <input type="date" name="data_sfarsit" placeholder="Data sfârșit" required value="{{ today }}">
+                </div>
+                
+                <input type="text" name="destinatie" placeholder="Destinație" required>
+                <input type="number" name="distanta" placeholder="Distanță (km)" required>
+                <input type="text" name="persoana_contact" placeholder="Persoană de contact" required>
+                <button type="submit" class="btn">Creează Misiune</button>
+            </form>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('active')">📋 Misiuni Active ({{ active_missions|length }})</div>
+            <div class="tab" onclick="switchTab('history')">📚 Istoric Misiuni ({{ completed_missions|length }})</div>
+        </div>
+
+        <div id="active-tab" class="tab-content active">
+            <h2>🚀 Misiuni Active</h2>
+            {% if active_missions %}
+                {% for mission in active_missions %}
+                <div class="mission" id="mission-{{ mission.id }}">
+                    <div class="mission-actions">
+                        <button class="btn btn-sm btn-warning" onclick="editMission('{{ mission.id }}')">✏️ Modifică</button>
+                        <a href="/delete_mission/{{ mission.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Sigur vrei să ștergi această misiune?')">🗑️ Șterge</a>
+                    </div>
+                    
+                    <strong>{{ mission.prenume }} {{ mission.nume }}</strong> - {{ mission.tip }} {{ mission.nr_inmatriculare }}<br>
+                    📅 {{ mission.data_inceput }} - {{ mission.data_sfarsit }} | 🎯 {{ mission.destinatie }}<br>
+                    📏 {{ mission.distanta }} km | 📞 {{ mission.persoana_contact }}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">
+                    <h3>📭 Nicio misiune activă</h3>
+                    <p>Nu există misiuni active în acest moment.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div id="history-tab" class="tab-content">
+            <h2>📚 Istoric Misiuni</h2>
+            {% if completed_missions %}
+                {% for mission in completed_missions %}
+                <div class="mission completed-mission">
+                    <strong>{{ mission.prenume }} {{ mission.nume }}</strong> - {{ mission.tip }} {{ mission.nr_inmatriculare }}<br>
+                    📅 {{ mission.data_inceput }} - {{ mission.data_sfarsit }} | 🎯 {{ mission.destinatie }}<br>
+                    📏 {{ mission.distanta }} km | 📞 {{ mission.persoana_contact }}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">
+                    <h3>📭 Nicio misiune în istoric</h3>
+                    <p>Nu există misiuni finalizate.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal pentru editare misiune -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px;">
+            <h3>✏️ Modifică Misiune</h3>
+            <form id="editMissionForm">
+                <input type="hidden" name="mission_id" id="edit_mission_id">
+                
+                <select name="sofer" id="edit_sofer" required>
+                    <option value="">Alege șoferul</option>
+                    {% for driver in drivers %}
+                    <option value="{{ driver.id }}">{{ driver.prenume }} {{ driver.nume }}</option>
+                    {% endfor %}
+                </select>
+                
+                <select name="vehicul" id="edit_vehicul" required>
+                    <option value="">Alege vehiculul</option>
+                    {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.id }}">{{ vehicle.tip }} - {{ vehicle.nr_inmatriculare }}</option>
+                    {% endfor %}
+                </select>
+                
+                <div class="date-range">
+                    <input type="date" name="data_inceput" id="edit_data_inceput" required>
+                    <input type="date" name="data_sfarsit" id="edit_data_sfarsit" required>
+                </div>
+                
+                <input type="text" name="destinatie" id="edit_destinatie" placeholder="Destinație" required>
+                <input type="number" name="distanta" id="edit_distanta" placeholder="Distanță (km)" required>
+                <input type="text" name="persoana_contact" id="edit_persoana_contact" placeholder="Persoană de contact" required>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn" onclick="closeEditModal()">Anulează</button>
+                    <button type="submit" class="btn btn-success">Salvează</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function editMission(missionId) {
+            try {
+                const response = await fetch('/get_mission_data/' + missionId);
+                const missionData = await response.json();
+                
+                if (missionData.success) {
+                    document.getElementById('edit_mission_id').value = missionId;
+                    document.getElementById('edit_sofer').value = missionData.mission.sofer_id;
+                    document.getElementById('edit_vehicul').value = missionData.mission.vehicle_id;
+                    document.getElementById('edit_data_inceput').value = missionData.mission.data_inceput;
+                    document.getElementById('edit_data_sfarsit').value = missionData.mission.data_sfarsit;
+                    document.getElementById('edit_destinatie').value = missionData.mission.destinatie;
+                    document.getElementById('edit_distanta').value = missionData.mission.distanta;
+                    document.getElementById('edit_persoana_contact').value = missionData.mission.persoana_contact;
+                    
+                    document.getElementById('editModal').style.display = 'block';
+                } else {
+                    alert('Eroare la încărcarea datelor misiunii');
+                }
+            } catch (error) {
+                alert('Eroare la încărcarea datelor misiunii');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        document.getElementById('createMissionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('/create_mission', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Misiune creată: ' + data.mission_id);
+                      location.reload();
+                  }
+              });
+        });
+
+        document.getElementById('editMissionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const missionId = document.getElementById('edit_mission_id').value;
+            
+            fetch('/update_mission/' + missionId, {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Misiune actualizată!');
+                      location.reload();
+                  } else {
+                      alert('Eroare: ' + data.error);
+                  }
+              });
+        });
+    </script>
+</body>
+</html>
