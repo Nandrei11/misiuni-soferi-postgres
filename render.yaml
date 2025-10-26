@@ -1,13 +1,12 @@
 services:
   - type: web
-    name: misiuni-soferi
+    name: misiuni-soferi-postgres
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
+    pythonVersion: "3.11"   # <- ADAUGĂ ASTA!
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: DATABASE_URL
         fromDatabase:
           name: misiuni-soferi-db
