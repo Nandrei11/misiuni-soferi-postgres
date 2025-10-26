@@ -1,22 +1,41 @@
 import os
-import psycopg2
+from urllib.parse import urlparse
+import pg8000
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from datetime import datetime, date
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'misiuni_soferi_secret_key_2024_postgres'
+app.secret_key = 'misiuni_soferi_secret_key_2024_postgres_pg8000'
 
-print("🚀 Aplicația a pornit! Se conectează la PostgreSQL...")
+print("🚀 Aplicația a pornit! Se conectează la PostgreSQL cu pg8000...")
 
-# Funcție pentru conexiune la baza de date
+# Funcție pentru conexiune la baza de date cu pg8000
 def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
-        raise Exception("❌ DATABASE_URL nu este setat! Verifică configurația pe Render.")
+        raise Exception("DATABASE_URL nu este setat!")
     
-    print(f"🔗 Conectare la PostgreSQL...")
-    conn = psycopg2.connect(database_url)
+    # Parsează URL-ul bazei de date
+    url = urlparse(database_url)
+    
+    # Extrage componentele din URL
+    host = url.hostname
+    port = url.port or 5432
+    database = url.path[1:]  # Elimină '/' din față
+    username = url.username
+    password = url.password
+    
+    print(f"🔗 Conectare la: {host}:{port}/{database} ca {username}")
+    
+    # Creează conexiunea cu pg8000
+    conn = pg8000.connect(
+        host=host,
+        port=port,
+        database=database,
+        user=username,
+        password=password
+    )
     return conn
 
 # Inițializare bază de date
@@ -24,6 +43,8 @@ def init_db():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+        
+        print("📦 Creare tabele dacă nu există...")
         
         # Tabela șoferi
         cur.execute('''
@@ -71,7 +92,10 @@ def init_db():
         
         # Verifică dacă există deja date
         cur.execute("SELECT COUNT(*) FROM admin WHERE username = 'admin'")
-        if cur.fetchone()[0] == 0:
+        result = cur.fetchone()
+        
+        if result[0] == 0:
+            print("👤 Adăugare utilizator admin...")
             # Inserează admin
             cur.execute("INSERT INTO admin (username, password) VALUES ('admin', 'admin123')")
             
@@ -96,13 +120,11 @@ def init_db():
                     "INSERT INTO vehicles (id, tip, nr_inmatriculare, created_at) VALUES (%s, %s, %s, %s)",
                     (vehicle_id, tip, nr_inmatriculare, datetime.now())
                 )
-            
-            print("✅ Date inițiale inserate în PostgreSQL!")
         
         conn.commit()
         cur.close()
         conn.close()
-        print("✅ Baza de date PostgreSQL inițializată cu succes!")
+        print("✅ Baza de date PostgreSQL inițializată cu succes cu pg8000!")
         
     except Exception as e:
         print(f"❌ Eroare la inițializarea bazei de date: {e}")
@@ -557,5 +579,4 @@ if __name__ == '__main__':
     init_db()
     
     port = int(os.environ.get("PORT", 5000))
-    print(f"🌐 Serverul rulează pe portul {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
