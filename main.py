@@ -1,5 +1,5 @@
 import os
-import psycopg2
+import psycopg
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from datetime import datetime, date
 from functools import wraps
@@ -7,14 +7,19 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = 'misiuni_soferi_secret_key_2024_postgres'
 
-print("🚀 Aplicația a pornit! Se conectează la PostgreSQL...")
+print("🚀 Aplicația a pornit! Se conectează la PostgreSQL cu psycopg3...")
 
 # Funcție pentru conexiune la baza de date
 def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
-    print(f"🔗 Conectare la: {database_url[:50]}...")  # Log doar primele 50 de caractere
-    conn = psycopg2.connect(database_url)
+    if not database_url:
+        raise Exception("DATABASE_URL nu este setat!")
+    
+    print(f"🔗 Conectare la PostgreSQL...")
+    conn = psycopg.connect(database_url)
     return conn
+
+# Restul codului rămâne EXACT la fel...
 
 # Inițializare bază de date
 def init_db():
