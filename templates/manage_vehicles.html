@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestionează Vehicule - Misiuni Șoferi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; }
+        .btn-success { background: #28a745; }
+        .vehicle { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .vehicle-form { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .vehicle-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .menu { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .no-data { text-align: center; padding: 40px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Gestionează Vehicule</h1>
+            <div class="menu">
+                <a href="/admin" class="btn">📋 Misiuni</a>
+                <a href="/manage_drivers" class="btn">👥 Gestionează Șoferi</a>
+                <a href="/manage_vehicles" class="btn">🚗 Gestionează Vehicule</a>
+                <a href="/export_active_missions" class="btn" target="_blank">📤 Exportă Misiuni Active</a>
+                <a href="/logout" class="btn" style="background: #dc3545;">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="vehicle-form">
+            <h2>➕ Adaugă Vehicul Nou</h2>
+            <form id="addVehicleForm">
+                <input type="text" name="tip" placeholder="Tip vehicul (ex: Dubă, Camion)" required>
+                <input type="text" name="nr_inmatriculare" placeholder="Număr înmatriculare" required>
+                <button type="submit" class="btn">Adaugă Vehicul</button>
+            </form>
+        </div>
+
+        <h2>📋 Lista Vehicule ({{ vehicles|length }})</h2>
+        
+        {% if vehicles %}
+            {% for vehicle in vehicles %}
+            <div class="vehicle" id="vehicle-{{ vehicle.id }}">
+                <div>
+                    <strong>{{ vehicle.tip }}</strong><br>
+                    <small>Număr: {{ vehicle.nr_inmatriculare }}</small><br>
+                    <small>ID: {{ vehicle.id }}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-warning" onclick="editVehicle('{{ vehicle.id }}')">✏️ Modifică</button>
+                    <a href="/delete_vehicle/{{ vehicle.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Sigur vrei să ștergi acest vehicul?')">🗑️ Șterge</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-data">
+                <h3>🚗 Niciun vehicul înregistrat</h3>
+                <p>Adaugă primul vehicul folosind formularul de mai sus.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal pentru editare vehicul -->
+    <div id="editVehicleModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px;">
+            <h3>✏️ Modifică Vehicul</h3>
+            <form id="editVehicleForm">
+                <input type="hidden" name="vehicle_id" id="edit_vehicle_id">
+                
+                <input type="text" name="tip" id="edit_tip" placeholder="Tip vehicul" required>
+                <input type="text" name="nr_inmatriculare" id="edit_nr_inmatriculare" placeholder="Număr înmatriculare" required>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn" onclick="closeEditVehicleModal()">Anulează</button>
+                    <button type="submit" class="btn btn-success">Salvează</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('addVehicleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('/add_vehicle', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Vehicul adăugat: ' + data.vehicle_id);
+                      location.reload();
+                  }
+              });
+        });
+
+        async function editVehicle(vehicleId) {
+            try {
+                const response = await fetch('/get_vehicle_data/' + vehicleId);
+                const vehicleData = await response.json();
+                
+                if (vehicleData.success) {
+                    document.getElementById('edit_vehicle_id').value = vehicleId;
+                    document.getElementById('edit_tip').value = vehicleData.vehicle.tip;
+                    document.getElementById('edit_nr_inmatriculare').value = vehicleData.vehicle.nr_inmatriculare;
+                    
+                    document.getElementById('editVehicleModal').style.display = 'block';
+                } else {
+                    alert('Eroare la încărcarea datelor vehiculului');
+                }
+            } catch (error) {
+                alert('Eroare la încărcarea datelor vehiculului');
+            }
+        }
+
+        function closeEditVehicleModal() {
+            document.getElementById('editVehicleModal').style.display = 'none';
+        }
+
+        document.getElementById('editVehicleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const vehicleId = document.getElementById('edit_vehicle_id').value;
+            
+            fetch('/update_vehicle/' + vehicleId, {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Vehicul actualizat!');
+                      location.reload();
+                  } else {
+                      alert('Eroare: ' + data.error);
+                  }
+              });
+        });
+    </script>
+</body>
+</html>
