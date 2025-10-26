@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestionează Șoferi - Misiuni Șoferi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; }
+        .btn-success { background: #28a745; }
+        .driver { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .driver-form { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .driver-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .menu { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .no-data { text-align: center; padding: 40px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👥 Gestionează Șoferi</h1>
+            <div class="menu">
+                <a href="/admin" class="btn">📋 Misiuni</a>
+                <a href="/manage_drivers" class="btn">👥 Gestionează Șoferi</a>
+                <a href="/manage_vehicles" class="btn">🚗 Gestionează Vehicule</a>
+                <a href="/export_active_missions" class="btn" target="_blank">📤 Exportă Misiuni Active</a>
+                <a href="/logout" class="btn" style="background: #dc3545;">🚪 Logout</a>
+            </div>
+        </div>
+
+        <div class="driver-form">
+            <h2>➕ Adaugă Șofer Nou</h2>
+            <form id="addDriverForm">
+                <input type="text" name="prenume" placeholder="Prenume" required>
+                <input type="text" name="nume" placeholder="Nume" required>
+                <button type="submit" class="btn">Adaugă Șofer</button>
+            </form>
+        </div>
+
+        <h2>📋 Lista Șoferi ({{ drivers|length }})</h2>
+        
+        {% if drivers %}
+            {% for driver in drivers %}
+            <div class="driver" id="driver-{{ driver.id }}">
+                <div>
+                    <strong>{{ driver.prenume }} {{ driver.nume }}</strong><br>
+                    <small>ID: {{ driver.id }}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-warning" onclick="editDriver('{{ driver.id }}')">✏️ Modifică</button>
+                    <a href="/delete_driver/{{ driver.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Sigur vrei să ștergi acest șofer?')">🗑️ Șterge</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-data">
+                <h3>👥 Nicio șofer înregistrat</h3>
+                <p>Adaugă primul șofer folosind formularul de mai sus.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal pentru editare șofer -->
+    <div id="editDriverModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px;">
+            <h3>✏️ Modifică Șofer</h3>
+            <form id="editDriverForm">
+                <input type="hidden" name="driver_id" id="edit_driver_id">
+                
+                <input type="text" name="prenume" id="edit_prenume" placeholder="Prenume" required>
+                <input type="text" name="nume" id="edit_nume" placeholder="Nume" required>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn" onclick="closeEditDriverModal()">Anulează</button>
+                    <button type="submit" class="btn btn-success">Salvează</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('addDriverForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('/add_driver', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Șofer adăugat: ' + data.driver_id);
+                      location.reload();
+                  }
+              });
+        });
+
+        async function editDriver(driverId) {
+            try {
+                const response = await fetch('/get_driver_data/' + driverId);
+                const driverData = await response.json();
+                
+                if (driverData.success) {
+                    document.getElementById('edit_driver_id').value = driverId;
+                    document.getElementById('edit_prenume').value = driverData.driver.prenume;
+                    document.getElementById('edit_nume').value = driverData.driver.nume;
+                    
+                    document.getElementById('editDriverModal').style.display = 'block';
+                } else {
+                    alert('Eroare la încărcarea datelor șoferului');
+                }
+            } catch (error) {
+                alert('Eroare la încărcarea datelor șoferului');
+            }
+        }
+
+        function closeEditDriverModal() {
+            document.getElementById('editDriverModal').style.display = 'none';
+        }
+
+        document.getElementById('editDriverForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const driverId = document.getElementById('edit_driver_id').value;
+            
+            fetch('/update_driver/' + driverId, {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Șofer actualizat!');
+                      location.reload();
+                  } else {
+                      alert('Eroare: ' + data.error);
+                  }
+              });
+        });
+    </script>
+</body>
+</html>
