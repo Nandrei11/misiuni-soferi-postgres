@@ -7,7 +7,7 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = 'misiuni_soferi_secret_key_2024'
 
-print("🚀 Aplicația a pornit cu Python 3.11 și SQLite!")
+print("🚀 Aplicația a pornit cu SQLite!")
 
 # Încarcă baza de date JSON
 def load_db(filename):
