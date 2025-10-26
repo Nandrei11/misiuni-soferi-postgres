@@ -7,4 +7,4 @@ services:
     startCommand: python main.py
     envVars:
       - key: DATABASE_URL
-        value: "postgresql://misiuni_soferi_3ld2_user:Wcn2FhzXbRfSwAMyy80TX5lkpn8clrKS@dpg-d3vab93e5dus73a86hcg-a/misiuni_soferi_3ld2"
+        value: "postgresql://misiuni_soferi_3ld2_user:Wcn2FhzXbRfSwAMyy80TX5lkpn8clrKS@dpg-d3vab93e5dus73a86hcg-a.oregon-postgres.render.com/misiuni_soferi_3ld2"
