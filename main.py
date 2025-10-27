@@ -354,7 +354,11 @@ def export_active_missions():
     
     today = date.today()
     cur.execute('''
-        SELECT m.*, d.nume, d.prenume, v.tip, v.nr_inmatriculare 
+        SELECT 
+            m.id, m.sofer_id, m.vehicle_id, m.data_inceput, m.data_sfarsit,
+            m.destinatie, m.distanta, m.persoana_contact, m.status, m.created_at,
+            d.id, d.nume, d.prenume, d.created_at,
+            v.id, v.tip, v.nr_inmatriculare, v.created_at
         FROM missions m 
         LEFT JOIN drivers d ON m.sofer_id = d.id 
         LEFT JOIN vehicles v ON m.vehicle_id = v.id
@@ -370,13 +374,17 @@ def export_active_missions():
     text_to_copy += "══════════════════\n\n"
     
     for mission in active_missions:
-        # CORECT: mission[9] = nume, mission[10] = prenume, mission[11] = tip, mission[12] = nr_inmatriculare
-        text_to_copy += f"👤 *Șofer:* {mission[10]} {mission[9]}\n"  # prenume + nume
-        text_to_copy += f"🚗 *Vehicul:* {mission[11]} - {mission[12]}\n"  # tip + nr_inmatriculare
-        text_to_copy += f"📅 *Perioadă:* {mission[3]} - {mission[4]}\n"  # data_inceput - data_sfarsit
-        text_to_copy += f"🎯 *Destinație:* {mission[5]}\n"  # destinatie
-        text_to_copy += f"📏 *Distanță:* {mission[6]} km\n"  # distanta
-        text_to_copy += f"📞 *Contact:* {mission[7]}\n"  # persoana_contact
+        # Structura bazată pe debug:
+        # 0-9: missions columns (m.*)
+        # 10-13: drivers columns (d.id, d.nume, d.prenume, d.created_at) 
+        # 14-17: vehicles columns (v.id, v.tip, v.nr_inmatriculare, v.created_at)
+        
+        text_to_copy += f"👤 *Șofer:* {mission[12]} {mission[11]}\n"  # d.prenume + d.nume
+        text_to_copy += f"🚗 *Vehicul:* {mission[15]} - {mission[16]}\n"  # v.tip + v.nr_inmatriculare
+        text_to_copy += f"📅 *Perioadă:* {mission[3]} - {mission[4]}\n"  # m.data_inceput - m.data_sfarsit
+        text_to_copy += f"🎯 *Destinație:* {mission[5]}\n"  # m.destinatie
+        text_to_copy += f"📏 *Distanță:* {mission[6]} km\n"  # m.distanta
+        text_to_copy += f"📞 *Contact:* {mission[7]}\n"  # m.persoana_contact
         text_to_copy += "────────────────────\n\n"
     
     text_to_copy += "_Trimis din aplicația Misiuni Șoferi_"
