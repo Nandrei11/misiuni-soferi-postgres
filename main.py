@@ -383,6 +383,46 @@ def export_active_missions():
     
     return render_template('export.html', export_text=text_to_copy)
 
+@app.route('/debug_export')
+@admin_required
+def debug_export():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    today = date.today()
+    cur.execute('''
+        SELECT m.*, d.nume, d.prenume, v.tip, v.nr_inmatriculare 
+        FROM missions m 
+        LEFT JOIN drivers d ON m.sofer_id = d.id 
+        LEFT JOIN vehicles v ON m.vehicle_id = v.id
+        WHERE m.data_sfarsit >= %s
+    ''', (today,))
+    missions = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    debug_info = "<h1>DEBUG - Structura misiunilor</h1>"
+    
+    for i, mission in enumerate(missions):
+        debug_info += f"<h2>Misiunea {i+1}:</h2>"
+        debug_info += f"<p><strong>ID misiune:</strong> {mission[0]}</p>"
+        debug_info += f"<p><strong>Șofer ID:</strong> {mission[1]}</p>"
+        debug_info += f"<p><strong>Vehicul ID:</strong> {mission[2]}</p>"
+        debug_info += f"<p><strong>Data început:</strong> {mission[3]}</p>"
+        debug_info += f"<p><strong>Data sfârșit:</strong> {mission[4]}</p>"
+        debug_info += f"<p><strong>Destinație:</strong> {mission[5]}</p>"
+        debug_info += f"<p><strong>Distanță:</strong> {mission[6]}</p>"
+        debug_info += f"<p><strong>Contact:</strong> {mission[7]}</p>"
+        debug_info += f"<p><strong>Status:</strong> {mission[8]}</p>"
+        debug_info += f"<p><strong>Nume șofer (index 9):</strong> {mission[9]}</p>"
+        debug_info += f"<p><strong>Prenume șofer (index 10):</strong> {mission[10]}</p>"
+        debug_info += f"<p><strong>Tip vehicul (index 11):</strong> {mission[11]}</p>"
+        debug_info += f"<p><strong>Nr. înmatriculare (index 12):</strong> {mission[12]}</p>"
+        debug_info += "<hr>"
+    
+    return debug_info
+
 # === GESTIONARE ȘOFERI ===
 @app.route('/manage_drivers')
 @admin_required
