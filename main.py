@@ -359,6 +359,7 @@ def export_active_missions():
         LEFT JOIN drivers d ON m.sofer_id = d.id 
         LEFT JOIN vehicles v ON m.vehicle_id = v.id
         WHERE m.data_sfarsit >= %s
+        ORDER BY m.data_inceput DESC
     ''', (today,))
     active_missions = cur.fetchall()
     
@@ -369,12 +370,13 @@ def export_active_missions():
     text_to_copy += "══════════════════\n\n"
     
     for mission in active_missions:
-        text_to_copy += f"👤 *Șofer:* {mission[10]} {mission[9]}\n"
-        text_to_copy += f"🚗 *Vehicul:* {mission[11]} - {mission[12]}\n"
-        text_to_copy += f"📅 *Perioadă:* {mission[3]} - {mission[4]}\n"
-        text_to_copy += f"🎯 *Destinație:* {mission[5]}\n"
-        text_to_copy += f"📏 *Distanță:* {mission[6]} km\n"
-        text_to_copy += f"📞 *Contact:* {mission[7]}\n"
+        # CORECT: mission[9] = nume, mission[10] = prenume, mission[11] = tip, mission[12] = nr_inmatriculare
+        text_to_copy += f"👤 *Șofer:* {mission[10]} {mission[9]}\n"  # prenume + nume
+        text_to_copy += f"🚗 *Vehicul:* {mission[11]} - {mission[12]}\n"  # tip + nr_inmatriculare
+        text_to_copy += f"📅 *Perioadă:* {mission[3]} - {mission[4]}\n"  # data_inceput - data_sfarsit
+        text_to_copy += f"🎯 *Destinație:* {mission[5]}\n"  # destinatie
+        text_to_copy += f"📏 *Distanță:* {mission[6]} km\n"  # distanta
+        text_to_copy += f"📞 *Contact:* {mission[7]}\n"  # persoana_contact
         text_to_copy += "────────────────────\n\n"
     
     text_to_copy += "_Trimis din aplicația Misiuni Șoferi_"
